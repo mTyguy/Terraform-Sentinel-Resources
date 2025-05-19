@@ -40,10 +40,12 @@ resource "azurerm_sentinel_alert_rule_nrt" "NRT_NonUs_Logins_v02" {
   display_name               = "NonUs_Login_Detected"
   severity                   = "Medium"
   query                      = <<QUERY
+let UserTravel = externaldata (_Username:string,_UserPrincipalName:string,_Country:string,_ReturnDate:datetime)["https://raw.githubusercontent.com/mTyguy/Terraform-Sentinel-Resources/refs/heads/main/Rules/usertravel.csv"]with (format="csv",ignoreFirstRecord=true);
 SigninLogs
+| join kind=inner UserTravel on $left.UserPrincipalName==$right._UserPrincipalName
 | where Status.errorCode in ("0","50140","50055","50057","50155","50105","50133","50005","50076","50079","50173","500158","50072","50074","53003","53000","53001","50129")
-| where LocationDetails.countryOrRegion !in ("US")
-| where LocationDetails.countryOrRegion !in ("CN","HK","CU","IR","KP","VE")
+| where Location  != "US"
+| where (UserPrincipalName == _UserPrincipalName and Location == _Country and TimeGenerated > _ReturnDate)
 //exclude foreign adversarial countries for another watchlist to reduce extra alerts
 QUERY
   enabled                    = true
