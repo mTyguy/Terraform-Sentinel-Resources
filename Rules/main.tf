@@ -107,6 +107,7 @@ SigninLogs
 | where Status.errorCode in ("0","50140","50055","50057","50155","50105","50133","50005","50076","50079","50173","500158","50072","50074","53003","53000","53001","50129")
 | where Location  != "US"
 | where (UserPrincipalName == _UserPrincipalName and Location == _Country and TimeGenerated > _ReturnDate)
+| where not(RiskState has_any ("confirmedSafe", "remediated", "dismissed", "atRisk", "confirmedCompromised")) //changes in user risk state and generate false positive detections
 //exclude foreign adversarial countries for another watchlist to reduce extra alerts
 QUERY
   enabled                    = true
