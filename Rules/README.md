@@ -1,1 +1,1 @@
-usertravel.cvs is being utilized in NRT_NonUs_Logins_v03 as a whitelisting mechanism.
+usertravel.cvs is being utilized in NRT_NonUs_Logins_v03 as a whitelisting mechanism -- this file can be hosted in blob storage and secured with a SAS key or hosted in some other fashion so that it is not publically accessible.
