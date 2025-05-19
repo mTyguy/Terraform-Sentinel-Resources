@@ -35,7 +35,7 @@ data "terraform_remote_state" "terraform_output" {
 
 resource "azurerm_sentinel_alert_rule_nrt" "NRT_NonUs_Logins_v02" {
   name                       = "NonUS_Logins_Watchlist_v02"
-  description                = "Rule is intended to trigger off successful NonUS logins. Intentionally excluding countries designated by US Federal Government as Foriengn Adversaries"
+  description                = "Rule is intended to trigger off successful NonUS logins. Intentionally excluding countries designated by US Federal Government as Foriengn Adversaries. Disabled in favor of utilizing NRT_NonUs_Logins_v03"
   log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
   display_name               = "NonUs_Login_Detected"
   severity                   = "Medium"
@@ -46,7 +46,7 @@ SigninLogs
 | where LocationDetails.countryOrRegion !in ("CN","HK","CU","IR","KP","VE")
 //exclude foreign adversarial countries for another watchlist to reduce extra alerts
 QUERY
-  enabled                    = true
+  enabled                    = false
   suppression_enabled        = false
   tactics                    = ["InitialAccess"]
   techniques                 = ["T1078"]
