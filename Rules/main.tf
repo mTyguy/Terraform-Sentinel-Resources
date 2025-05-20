@@ -96,7 +96,7 @@ QUERY
 
 resource "azurerm_sentinel_alert_rule_nrt" "NRT_NonUs_Logins_v03" {
   name                       = "NonUS_Logins_Watchlist_v03"
-  description                = "Rule is intended to trigger off successful NonUS logins. Includes a builtin whitelisting mechanism that checks a remove csv file for user travel destination countrys and return dates. Intentionally excluding countries designated by US Federal Government as Foriengn Adversaries"
+  description                = "Rule is intended to trigger off successful NonUS logins. Includes a builtin whitelisting mechanism that checks a remote csv file for user travel destination countries and return dates. Intentionally excluding countries designated by US Federal Government as Foriengn Adversaries"
   log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
   display_name               = "NonUs_Login_Detected_w/whitelisting"
   severity                   = "Medium"
