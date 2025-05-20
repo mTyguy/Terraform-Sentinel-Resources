@@ -1,4 +1,4 @@
-# version 0.4 #
+# version 0.5 #
 
 ##########
 #change-log
@@ -101,7 +101,7 @@ resource "azurerm_sentinel_alert_rule_nrt" "NRT_NonUs_Logins_v03" {
   display_name               = "NonUs_Login_Detected_w/whitelisting"
   severity                   = "Medium"
   query                      = <<QUERY
-let UserTravel = externaldata (_Username:string,_UserPrincipalName:string,_Country:string,_ReturnDate:datetime)["https://raw.githubusercontent.com/mTyguy/Terraform-Sentinel-Resources/refs/heads/main/Rules/usertravel.csv"]with (format="csv",ignoreFirstRecord=true);
+let UserTravel = externaldata (_Username:string,_UserPrincipalName:string,_Country:string,_ReturnDate:datetime)["https://raw.githubusercontent.com/mTyguy/Terraform-Sentinel-Resources/refs/heads/main/Rules/externaldata/usertravel.csv"]with (format="csv",ignoreFirstRecord=true);
 SigninLogs
 | join kind=inner UserTravel on $left.UserPrincipalName==$right._UserPrincipalName
 | where Status.errorCode in ("0","50140","50055","50057","50155","50105","50133","50005","50076","50079","50173","500158","50072","50074","53003","53000","53001","50129")
@@ -195,6 +195,91 @@ QUERY
   custom_details = {
     Location         = "Location"
     RiskDuringSignIn = "RiskLevelDuringSignIn"
+  }
+
+  event_grouping {
+    aggregation_method = "SingleAlert"
+  }
+
+  incident {
+    create_incident_enabled = true
+
+    grouping {
+      by_alert_details        = []
+      by_custom_details       = []
+      by_entities             = []
+      enabled                 = true
+      entity_matching_method  = "AllEntities"
+      lookback_duration       = "PT5M"
+      reopen_closed_incidents = false
+    }
+  }
+}
+
+###
+
+resource "azurerm_sentinel_alert_rule_nrt" "NRT_Unapproved_RMM_Tools_v01" {
+  name                       = "Unapproved_RMM_Tools_v01"
+  description                = "Rule is intended to trigger off the detection of unapproved RMM tools via a url connection."
+  log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
+  display_name               = "Unapproved_RMM_Tool_Detected"
+  severity                   = "Medium"
+  query                      = <<QUERY
+//get Approved RMM tool Urls from csv file and make them usable
+let SanctionedRMM = externaldata(_Url: string, _RmmTool: string)
+    ['https://raw.githubusercontent.com/mTyguy/Terraform-Sentinel-Resources/refs/heads/main/Rules/externaldata/ApprovedRmmToolsAndUrls.csv']
+    with(format="csv", ignoreFirstRecord=true);
+let SanctionedRMMUrls =
+SanctionedRMM | project _Url;
+//get list of RMM tool Urls from csv file and make them usable
+//list is a slight modification from this source https://github.com/jischell-msft/RemoteManagementMonitoringTools/blob/main/Network%20Indicators/RMM_SummaryNetworkURI.csv
+let RMMIndicators = externaldata(_Url: string, _RmmTool: string)
+    ['https://raw.githubusercontent.com/mTyguy/Terraform-Sentinel-Resources/refs/heads/main/Rules/externaldata/RmmUrlIndicators.csv']
+    with(format="csv", ignoreFirstRecord=true);
+//
+let RMMIndicatorUrls =
+RMMIndicators | project _Url;
+//
+DeviceNetworkEvents
+| where RemoteUrl has_any (RMMIndicatorUrls)
+| where not(RemoteUrl has_any (SanctionedRMMUrls))
+QUERY
+  enabled                    = true
+  suppression_enabled        = false
+  tactics                    = ["CommandAndControl"]
+  techniques                 = ["T1219"]
+
+  #define entities
+  entity_mapping {
+    entity_type = "Account"
+    field_mapping {
+      identifier  = "Name"
+      column_name = "InitiatingProcessAccountSid"
+    }
+  }
+
+  entity_mapping {
+    entity_type = "Host"
+    field_mapping {
+      identifier  = "HostName"
+      column_name = "DeviceName"
+    }
+  }
+
+  entity_mapping {
+    entity_type = "URL"
+    field_mapping {
+      identifier  = "Url"
+      column_name = "RemoteUrl"
+    }
+  }
+
+  entity_mapping {
+    entity_type = "File"
+    field_mapping {
+      identifier  = "Name"
+      column_name = "InitiatingProcessVersionInfoOriginalFileName"
+    }
   }
 
   event_grouping {
