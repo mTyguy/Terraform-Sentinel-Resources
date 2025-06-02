@@ -1,1 +1,1 @@
-Files hosted here are used for rules as externaldata references in KQL. They ought to be hosted in a manner that requires a secret to access them, like in blob storage and accessible with a SAS for example.
+Files hosted here are used for rules as externaldata references in KQL. They ought to be hosted in a manner that requires a secret to access them, like in blob storage and accessible with a SAS or Storage Key for example.
