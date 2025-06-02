@@ -1,0 +1,9 @@
+accountEnabled,displayName,userPrincipalName,id,country,usageLocation,userType
+True,Andrew Jackson,ajackson@domain.com,XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX,US,US,Member
+True,Abraham Lincoln,alincoln@domain.com,XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX,"GB,FR,SE",US,Member
+True,George Washington,gwashington@domain.com,XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX,US,US,Member
+True,Richard Nixon,rnixon@domain.com,XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX,"US,FR",US,Member
+True,Teddy Roosevelt,teddyr@domain.com,XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX,US,US,Member
+True,Thomas Jefferson,tjefferson@domain.com,XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX,US,US,Member
+True,Ulysses Grant,ugrant@domain.com,XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX,US,US,Member
+True,Woodrow Wilson,wwilson@domain.com,XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX,US,US,Member
