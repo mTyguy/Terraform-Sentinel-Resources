@@ -3,9 +3,10 @@
 ##########
 #change-log
 #2025-01-28 created NRT rules
-#2025-04-14 mapped entities to alerts. need to review what custom_details actually do, also look at automation rules
+#2025-04-14 mapped entities to alerts
 #2025-05-18 added data block to remove need for workspace_id variable
 #2025-05-19 NRT_NonUs_Logins_v03
+#2025-06-02 removed user travel rule, which had issues. created NRT_NonUs_Logins_Whitelisting_v02. fixed some entities mapping.
 
 ###
 
@@ -35,7 +36,7 @@ data "terraform_remote_state" "terraform_output" {
 
 resource "azurerm_sentinel_alert_rule_nrt" "NRT_NonUs_Logins_v02" {
   name                       = "NonUS_Logins_Watchlist_v02"
-  description                = "Rule is intended to trigger off successful NonUS logins. Intentionally excluding countries designated by US Federal Government as Foriengn Adversaries. Disabled in favor of utilizing NRT_NonUs_Logins_v03"
+  description                = "Rule is intended to trigger off successful NonUS logins. Intentionally excluding countries designated by US Federal Government as Foriengn Adversaries. Disabled in favor of utilizing NRT_NonUs_Logins_Whitelisting_v02"
   log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
   display_name               = "NonUs_Login_Detected"
   severity                   = "Medium"
@@ -55,8 +56,8 @@ QUERY
   entity_mapping {
     entity_type = "Account"
     field_mapping {
-      identifier  = "AadUserId"
-      column_name = "UserPrincipalName"
+      identifier  = "Name"
+      column_name = "Identity"
     }
   }
   entity_mapping {
@@ -94,20 +95,24 @@ QUERY
 
 ###
 
-resource "azurerm_sentinel_alert_rule_nrt" "NRT_NonUs_Logins_v03" {
-  name                       = "NonUS_Logins_Watchlist_v03"
-  description                = "Rule is intended to trigger off successful NonUS logins. Includes a builtin whitelisting mechanism that checks a remote csv file for user travel destination countries and return dates. Intentionally excluding countries designated by US Federal Government as Foriengn Adversaries"
+#NonUs login detection with Whitelisting mechanism based on users' properties as described in their respective Entra Properties
+
+resource "azurerm_sentinel_alert_rule_nrt" "NRT_NonUs_Logins_Whitelisting_v02" {
+  name                       = "NonUS_Logins_Watchlist_with_Whitelisting_v02"
+  description                = "Rule is intended to trigger off successful NonUS logins. Includes a builtin whitelisting mechanism that checks a remote csv file pulled from Entra properties that checks what Countries user is expected to login from. Intentionally excluding countries designated by US Federal Government as Foriengn Adversaries"
   log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
-  display_name               = "NonUs_Login_Detected_w/whitelisting"
+  display_name               = "NonUs_Login_Detected_with_Whitelisting_v02"
   severity                   = "Medium"
   query                      = <<QUERY
-let UserTravel = externaldata (_Username:string,_UserPrincipalName:string,_Country:string,_ReturnDate:datetime)["https://raw.githubusercontent.com/mTyguy/Terraform-Sentinel-Resources/refs/heads/main/Rules/externaldata/usertravel.csv"]with (format="csv",ignoreFirstRecord=true);
+let UserData = externaldata(_accountEnabled:string, _displayName:string, _userPrincipalName:string, _id:string, _country:string, _usageLocation:string, _userType:string)
+    ["https://raw.githubusercontent.com/mTyguy/Terraform-Sentinel-Resources/refs/heads/main/Rules/externaldata/users.csv"]
+    with (format="csv",ignoreFirstRecord=true);
 SigninLogs
-| join kind=inner UserTravel on $left.UserPrincipalName==$right._UserPrincipalName
+| join kind=rightouter UserData on $left.UserId==$right._id
 | where Status.errorCode in ("0","50140","50055","50057","50155","50105","50133","50005","50076","50079","50173","500158","50072","50074","53003","53000","53001","50129")
-| where Location  != "US"
-| where (UserPrincipalName == _UserPrincipalName and Location == _Country and TimeGenerated > _ReturnDate)
-| where not(RiskState has_any ("confirmedSafe", "remediated", "dismissed", "atRisk", "confirmedCompromised")) //changes in user risk state and generate false positive detections
+| where LocationDetails.countryOrRegion !in ("US")
+| where LocationDetails.countryOrRegion !in ("CN","HK","CU","IR","KP","VE")
+| where not(_country contains Location)
 //exclude foreign adversarial countries for another watchlist to reduce extra alerts
 QUERY
   enabled                    = true
@@ -115,12 +120,15 @@ QUERY
   tactics                    = ["InitialAccess"]
   techniques                 = ["T1078"]
 
-  #define entities
   entity_mapping {
     entity_type = "Account"
     field_mapping {
-      identifier  = "AadUserId"
-      column_name = "UserPrincipalName"
+      identifier  = "Name"
+      column_name = "Identity"
+    }
+    field_mapping {
+      identifier  = "Sid"
+      column_name = "UserId"
     }
   }
   entity_mapping {
@@ -131,7 +139,6 @@ QUERY
     }
   }
 
-  #define custom entities
   custom_details = {
     Location         = "Location"
     RiskDuringSignIn = "RiskLevelDuringSignIn"
@@ -175,12 +182,11 @@ QUERY
   tactics                    = ["InitialAccess"]
   techniques                 = ["T1078"]
 
-  #define entities
   entity_mapping {
     entity_type = "Account"
     field_mapping {
-      identifier  = "AadUserId"
-      column_name = "UserPrincipalName"
+      identifier  = "Name"
+      column_name = "Identity"
     }
   }
   entity_mapping {
@@ -191,7 +197,6 @@ QUERY
     }
   }
 
-  #define custom entities
   custom_details = {
     Location         = "Location"
     RiskDuringSignIn = "RiskLevelDuringSignIn"
@@ -249,7 +254,6 @@ QUERY
   tactics                    = ["CommandAndControl"]
   techniques                 = ["T1219"]
 
-  #define entities
   entity_mapping {
     entity_type = "Account"
     field_mapping {
