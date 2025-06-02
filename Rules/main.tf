@@ -241,10 +241,6 @@ SanctionedRMM | project _Url;
 let RMMIndicators = externaldata(_Url: string, _RmmTool: string)
     ['https://raw.githubusercontent.com/mTyguy/Terraform-Sentinel-Resources/refs/heads/main/Rules/externaldata/RmmUrlIndicators.csv']
     with(format="csv", ignoreFirstRecord=true);
-//
-let RMMIndicatorUrls =
-RMMIndicators | project _Url;
-//
 DeviceNetworkEvents
 | where RemoteUrl has_any (RMMIndicatorUrls)
 | where not(RemoteUrl has_any (SanctionedRMMUrls))
