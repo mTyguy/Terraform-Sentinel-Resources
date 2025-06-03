@@ -5,3 +5,7 @@ Current Rules:
 2). FA_Logins_Watchlist_v02 -- Rule intended to trigger off successful logins from countries designated as Foriegn Adversaries by US Federal Government
 
 3). Unapproved_RMM_Tools_v01 -- Rule is intended to trigger off the detection of unapproved RMM tools via a url connection
+ 
+/externaldata holds external data to be used in KQL queries
+
+/scripts holds helper scripts to retrieve externaldata
