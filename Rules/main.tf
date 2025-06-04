@@ -31,8 +31,8 @@ data "terraform_remote_state" "terraform_output" {
 #https://learn.microsoft.com/en-us/azure/sentinel/near-real-time-rules
 #https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/sentinel_alert_rule_nrt
 
-
-#NonUS login detection
+###
+#User Login related detections
 
 resource "azurerm_sentinel_alert_rule_nrt" "NRT_NonUs_Logins_v02" {
   name                       = "NonUS_Logins_Watchlist_v02"
@@ -93,7 +93,7 @@ QUERY
   }
 }
 
-###
+#
 
 #NonUs login detection with Whitelisting mechanism based on users' properties as described in their respective Entra Properties
 
@@ -163,7 +163,7 @@ QUERY
   }
 }
 
-###
+#
 
 #Logins from nations defined as US Foreign Adversaries (FA)
 resource "azurerm_sentinel_alert_rule_nrt" "NRT_FA_Logins_Watchlist_v02" {
@@ -222,6 +222,106 @@ QUERY
 }
 
 ###
+#Application/Service Principal Related rules
+
+resource "azurerm_sentinel_alert_rule_nrt" "NRT_Application_Registered_RedirectUri_LocalHost_Authentication_v01" {
+  name                       = "NRT_Application__Registered_RedirectUri_LocalHost_Authentication_v01"
+  description                = "Rule to detect when an application is registered with a RedirectUri set to localhost or loopback address. See https://learn.microsoft.com/en-us/security/operations/incident-response-playbook-compromised-malicious-app"
+  log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
+  display_name               = "NRT_Application_Registered_RedirectUri_LocalHost_Authentication_v01"
+  severity                   = "High"
+  query                      = <<QUERY
+AuditLogs
+| where OperationName in ("Add application", "Add service principal")
+| mv-expand (TargetResources)
+| where (TargetResources.modifiedProperties.[0].displayName == "AppAddress" or TargetResources.modifiedProperties.[1].displayName == "AppAddress")
+| where (TargetResources.modifiedProperties.[0].newValue has_any ("127.0.0.1", "localhost") or TargetResources.modifiedProperties.[1].newValue has_any ("127.0.0.1", "localhost"))
+| extend _changedByUpn = InitiatedBy.user.userPrincipalName| extend _changedByUserGuid = InitiatedBy.user.id| extend _changedBySourceIp = InitiatedBy.user.ipAddress
+| extend _appName = TargetResources.displayName//| extend _changeOperation = TargetResources.modifiedProperties.[1].displayName| extend _newValue = TargetResources.modifiedProperties.[1].newValue
+QUERY
+  enabled                    = true
+  suppression_enabled        = false
+  tactics                    = ["Persistence"]
+  techniques                 = ["T1098"]
+
+  #need to flush out entity mapping
+  #  entity_mapping {
+  #    entity_type = "Account"
+  #    field_mapping {
+  #      identifier  = "Name"
+  #      column_name = "InitiatingProcessAccountSid"
+  #    }
+  #  }
+  event_grouping {
+    aggregation_method = "SingleAlert"
+  }
+
+  incident {
+    create_incident_enabled = true
+
+    grouping {
+      by_alert_details        = []
+      by_custom_details       = []
+      by_entities             = []
+      enabled                 = true
+      entity_matching_method  = "AllEntities"
+      lookback_duration       = "PT5M"
+      reopen_closed_incidents = false
+    }
+  }
+}
+
+#
+
+resource "azurerm_sentinel_alert_rule_nrt" "NRT_Application_RedirectUri_LocalHost_Authentication_Added_v01" {
+  name                       = "NRT_Application_RedirectUri_LocalHost_Authentication_Added_v01"
+  description                = "Rule to detect when a registered application is given a Redirect Url for localhost or loopback address. See https://learn.microsoft.com/en-us/security/operations/incident-response-playbook-compromised-malicious-app"
+  log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
+  display_name               = "NRT_Application_RedirectUri_LocalHost_Authentication_Added_v01"
+  severity                   = "High"
+  query                      = <<QUERY
+AuditLogs
+| where OperationName in ("Update application", "Update service principal")
+| mv-expand (TargetResources)
+| where TargetResources.modifiedProperties.[0].displayName == "AppAddress"
+| where TargetResources.modifiedProperties.[0].newValue has_any ("127.0.0.1", "localhost")
+| extend _changedByUpn = InitiatedBy.user.userPrincipalName| extend _changedByUserGuid = InitiatedBy.user.id| extend _changedBySourceIp = InitiatedBy.user.ipAddress
+| extend _appName = TargetResources.displayName| extend _changeOperation = TargetResources.modifiedProperties.[0].displayName| extend _newValue = TargetResources.modifiedProperties.[0].newValue
+QUERY
+  enabled                    = true
+  suppression_enabled        = false
+  tactics                    = ["Persistence"]
+  techniques                 = ["T1098"]
+
+  #need to flush out entity mapping
+  #  entity_mapping {
+  #    entity_type = "Account"
+  #    field_mapping {
+  #      identifier  = "Name"
+  #      column_name = "InitiatingProcessAccountSid"
+  #    }
+  #  }
+  event_grouping {
+    aggregation_method = "SingleAlert"
+  }
+
+  incident {
+    create_incident_enabled = true
+
+    grouping {
+      by_alert_details        = []
+      by_custom_details       = []
+      by_entities             = []
+      enabled                 = true
+      entity_matching_method  = "AllEntities"
+      lookback_duration       = "PT5M"
+      reopen_closed_incidents = false
+    }
+  }
+}
+
+###
+#Device Related Rules
 
 resource "azurerm_sentinel_alert_rule_nrt" "NRT_Unapproved_RMM_Tools_v01" {
   name                       = "Unapproved_RMM_Tools_v01"
