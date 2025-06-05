@@ -222,6 +222,59 @@ QUERY
 }
 
 ###
+#User post compromise detection rules
+
+resource "azurerm_sentinel_alert_rule_nrt" "NRT_Risky_User_Registers_New_MFA_v01" {
+  name                       = "NRT_Risky_User_Registers_New_MFA_v01"
+  description                = "Rule to detect when a user with an active risk state registers a new MFA method."
+  log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
+  display_name               = "NRT_Risky_User_Registers_New_MFA_v01"
+  severity                   = "High"
+  query                      = <<QUERY
+let AtRiskUsers =
+AADRiskyUsers
+| where not(RiskState has_any ("none", "confirmedSafe", "dismissed"))
+| distinct UserPrincipalName;
+AuditLogs
+| where OperationName == "User registered security info"
+| mv-expand TargetResources.[0].userPrincipalName to typeof(string)
+| extend _userWithNewMFA = TargetResources_0_userPrincipalName
+| where isnotnull(_userWithNewMFA)
+| where _userWithNewMFA has_any(AtRiskUsers)
+QUERY
+  enabled                    = true
+  suppression_enabled        = false
+  tactics                    = ["Persistence"]
+  techniques                 = ["T1098"]
+
+#need to flush out entity mapping
+  #  entity_mapping {
+  #    entity_type = "Account"
+  #    field_mapping {
+  #      identifier  = "Name"
+  #      column_name = "InitiatingProcessAccountSid"
+  #    }
+  #  }
+  event_grouping {
+    aggregation_method = "SingleAlert"
+  }
+
+  incident {
+    create_incident_enabled = true
+
+    grouping {
+      by_alert_details        = []
+      by_custom_details       = []
+      by_entities             = []
+      enabled                 = true
+      entity_matching_method  = "AllEntities"
+      lookback_duration       = "PT5M"
+      reopen_closed_incidents = false
+    }
+  }
+}
+
+###
 #Application/Service Principal Related rules
 
 resource "azurerm_sentinel_alert_rule_nrt" "NRT_Application_Registered_RedirectUri_LocalHost_Authentication_v01" {
@@ -244,7 +297,7 @@ QUERY
   tactics                    = ["Persistence"]
   techniques                 = ["T1098"]
 
-  #need to flush out entity mapping
+#need to flush out entity mapping
   #  entity_mapping {
   #    entity_type = "Account"
   #    field_mapping {
@@ -293,7 +346,7 @@ QUERY
   tactics                    = ["Persistence"]
   techniques                 = ["T1098"]
 
-  #need to flush out entity mapping
+#need to flush out entity mapping
   #  entity_mapping {
   #    entity_type = "Account"
   #    field_mapping {
