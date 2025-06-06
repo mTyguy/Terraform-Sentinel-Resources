@@ -224,11 +224,11 @@ QUERY
 ###
 #User post compromise detection rules
 
-resource "azurerm_sentinel_alert_rule_nrt" "NRT_Risky_User_Registers_New_MFA_v01" {
-  name                       = "NRT_Risky_User_Registers_New_MFA_v01"
+resource "azurerm_sentinel_alert_rule_scheduled" "SCH_Risky_User_Registers_New_MFA_v01" {
+  name                       = "Risky_User_Registers_New_MFA_v01"
   description                = "Rule to detect when a user with an active risk state registers a new MFA method."
   log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
-  display_name               = "NRT_Risky_User_Registers_New_MFA_v01"
+  display_name               = "Risky_User_Registers_New_MFA_v01"
   severity                   = "High"
   query                      = <<QUERY
 let AtRiskUsers =
@@ -246,15 +246,19 @@ QUERY
   suppression_enabled        = false
   tactics                    = ["Persistence"]
   techniques                 = ["T1098"]
+  query_frequency            = "PT30M"
+  query_period               = "PT30M"
 
-#need to flush out entity mapping
-  #  entity_mapping {
-  #    entity_type = "Account"
-  #    field_mapping {
-  #      identifier  = "Name"
-  #      column_name = "InitiatingProcessAccountSid"
-  #    }
-  #  }
+/*
+need to flush out entity mapping
+   entity_mapping {
+     entity_type = "Account"
+     field_mapping {
+       identifier  = "Name"
+       column_name = "InitiatingProcessAccountSid"
+     }
+   }
+*/
   event_grouping {
     aggregation_method = "SingleAlert"
   }
@@ -278,10 +282,10 @@ QUERY
 #Application/Service Principal Related rules
 
 resource "azurerm_sentinel_alert_rule_nrt" "NRT_Application_Registered_RedirectUri_LocalHost_Authentication_v01" {
-  name                       = "NRT_Application__Registered_RedirectUri_LocalHost_Authentication_v01"
+  name                       = "Application__Registered_RedirectUri_LocalHost_Authentication_v01"
   description                = "Rule to detect when an application is registered with a RedirectUri set to localhost or loopback address. See https://learn.microsoft.com/en-us/security/operations/incident-response-playbook-compromised-malicious-app"
   log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
-  display_name               = "NRT_Application_Registered_RedirectUri_LocalHost_Authentication_v01"
+  display_name               = "Application_Registered_RedirectUri_LocalHost_Authentication_v01"
   severity                   = "High"
   query                      = <<QUERY
 AuditLogs
@@ -327,10 +331,10 @@ QUERY
 #
 
 resource "azurerm_sentinel_alert_rule_nrt" "NRT_Application_RedirectUri_LocalHost_Authentication_Added_v01" {
-  name                       = "NRT_Application_RedirectUri_LocalHost_Authentication_Added_v01"
+  name                       = "Application_RedirectUri_LocalHost_Authentication_Added_v01"
   description                = "Rule to detect when a registered application is given a Redirect Url for localhost or loopback address. See https://learn.microsoft.com/en-us/security/operations/incident-response-playbook-compromised-malicious-app"
   log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
-  display_name               = "NRT_Application_RedirectUri_LocalHost_Authentication_Added_v01"
+  display_name               = "Application_RedirectUri_LocalHost_Authentication_Added_v01"
   severity                   = "High"
   query                      = <<QUERY
 AuditLogs
@@ -455,48 +459,3 @@ QUERY
     }
   }
 }
-
-################
-#Scheduled Rules
-#https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/sentinel_alert_rule_scheduled
-
-
-
-
-
-
-
-###
-
-#Example
-/*
-resource "azurerm_sentinel_alert_rule_scheduled" "SCHDexamplerule01" {
-  name                       = "SCHDexample01"
-  log_analytics_workspace_id = var.workspace_id
-  display_name               = "SCHDexample01"
-  severity                   = "Medium"
-  enabled                    = "false"
-  query                      = <<QUERY
-Table
-  | take 10
-QUERY
-  query_frequency            = "PT5H"
-  query_period               = "PT5H"
-  suppression_duration       = "PT5H"
-  suppression_enabled        = false
-  trigger_operator           = "GreaterThan"
-  trigger_threshold          = 0
-  incident {
-    create_incident_enabled = true
-    grouping {
-      by_alert_details        = []
-      by_custom_details       = []
-      by_entities             = []
-      enabled                 = false
-      entity_matching_method  = "AllEntities"
-      lookback_duration       = "PT5M"
-      reopen_closed_incidents = false
-    }
-  }
-}
-*/
