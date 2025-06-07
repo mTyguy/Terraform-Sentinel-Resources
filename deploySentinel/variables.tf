@@ -1,9 +1,10 @@
 # version 0.2 #
 
 variable "resource_tags" {
+  description = "define tags for your resources"
   default = {
     enviornment = "SentinelDeployment-terraform"
-    description = "define tags for your resources"
+
   }
 }
 
