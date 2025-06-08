@@ -1,4 +1,4 @@
-Modules for creating a Linux server machine to ingest syslog information.
+Modules for creating a Linux server VM to ingest syslog information.
 
 After creation, need to configure a Data Collection Rule to specify what logs to ingest based on rules.
 
