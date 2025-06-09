@@ -7,7 +7,7 @@ provider "azurerm" {
   subscription_id = var.subscription_id
 }
 
-#substantiate resource group
+#create resource group
 
 resource "azurerm_resource_group" "Sentinel-RG" {
   name     = var.resource_group_name
