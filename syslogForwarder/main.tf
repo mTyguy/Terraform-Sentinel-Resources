@@ -77,6 +77,18 @@ resource "azurerm_linux_virtual_machine" "syslogForwarder-VM" {
     version   = "latest"
   }
 
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      user        = "admin"
+      private_key = file("/home/admin/id_rsa")
+      host        = azurerm_public_ip.syslogForwarder-pubIP.ip_address
+    }
+    inline = [
+      "sudo wget -O Forwarder_AMA_installer.py https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/DataConnectors/Syslog/Forwarder_AMA_installer.py&&sudo python3 Forwarder_AMA_installer.py"
+    ]
+  }
+
   tags = var.resource_tags
 
 }
