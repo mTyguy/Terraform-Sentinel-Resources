@@ -7,21 +7,12 @@ provider "azurerm" {
   subscription_id = var.subscription_id
 }
 
-data "terraform_remote_state" "terraform_output" {
+data "terraform_remote_state" "network_config" {
   backend = "local"
 
   config = {
     path = "../syslogForwarder/networkingConfig/terraform.tfstate"
   }
-}
-
-#substantiate resource group
-
-resource "azurerm_resource_group" "Sentinel-RG" {
-  name     = var.resource_group_name
-  location = var.resource_group_location
-
-  tags = var.resource_tags
 }
 
 ###
@@ -30,12 +21,12 @@ resource "azurerm_resource_group" "Sentinel-RG" {
 
 resource "azurerm_network_interface" "syslogForwarder-NIC" {
   name                = "syslogForwarder-NIC"
-  location            = var.resource_group_location
-  resource_group_name = var.resource_group_name
+  location            = data.terraform_remote_state.network_config.outputs.syslogForwarder_rg_location
+  resource_group_name = data.terraform_remote_state.network_config.outputs.syslogForwarder_rg_name
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = data.terraform_remote_state.terraform_output.outputs.syslogForwarder_subnet_id
+    subnet_id                     = data.terraform_remote_state.network_config.outputs.syslogForwarder_subnet_id
     private_ip_address_allocation = "Static"
     private_ip_address            = "192.168.1.6"
     public_ip_address_id          = azurerm_public_ip.syslogForwarder-pubIP.id
@@ -47,8 +38,8 @@ resource "azurerm_network_interface" "syslogForwarder-NIC" {
 
 resource "azurerm_public_ip" "syslogForwarder-pubIP" {
   name                = "syslogForwarder-pubIP"
-  resource_group_name = var.resource_group_name
-  location            = var.resource_group_location
+  resource_group_name = data.terraform_remote_state.network_config.outputs.syslogForwarder_rg_name
+  location            = data.terraform_remote_state.network_config.outputs.syslogForwarder_rg_location
   allocation_method   = "Static"
 
   tags = var.resource_tags
@@ -62,8 +53,8 @@ resource "azurerm_linux_virtual_machine" "syslogForwarder-VM" {
   computer_name                   = "syslogForwarder"
   disable_password_authentication = true
   name                            = "syslogForwarder-VM"
-  resource_group_name             = var.resource_group_name
-  location                        = var.resource_group_location
+  resource_group_name             = data.terraform_remote_state.network_config.outputs.syslogForwarder_rg_name
+  location                        = data.terraform_remote_state.network_config.outputs.syslogForwarder_rg_location
   size                            = "Standard_B1ms" /* 1vCPU 2gbRam - change per needs*/
   network_interface_ids = [
     azurerm_network_interface.syslogForwarder-NIC.id
