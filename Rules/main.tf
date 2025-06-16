@@ -377,6 +377,70 @@ QUERY
   }
 }
 
+#
+
+resource "azurerm_sentinel_alert_rule_nrt" "NRT_Mail_Api_Permissions_Grant" {
+  name                       = "NRT_Mail_Api_Permissions_Grant"
+  description                = "Rule to detect when an constent is given to API permissions related to retrieving and sending emails. Masquarading or malicious apps can use these api permissions for nefarious purposes. See threat intel https://security.microsoft.com/threatanalytics3/ba008625-320a-4c71-b996-977049575144/analystreport"
+  log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
+  display_name               = "Mail_Api_Permissions_Grant"
+  severity                   = "High"
+  query                      = <<QUERY
+let monitoredMailApiPermissions = dynamic(["Files.ReadWrite","IMAP.AccessAsUser.All","Mail.Read","Mail.ReadBasic","Mail.ReadWrite","Mail.Send","POP.AccessAsUser.All","SMTP.Send","User.Read"]);
+let newMailAppName =
+AuditLogs
+| mv-expand (TargetResources)
+| where OperationName == "Consent to application"
+| where TargetResources.modifiedProperties has_any (monitoredMailApiPermissions)
+| extend _appName = tostring(TargetResources.displayName)
+| distinct _appName;
+AuditLogs
+| mv-expand (TargetResources)
+| where TargetResources.modifiedProperties has_any (monitoredMailApiPermissions)
+| where OperationName in ("Add app role assignment to service principal", "Add delegated permission grant")
+| where TargetResources.modifiedProperties has_any (newMailAppName)
+| mv-expand (TargetResources.modifiedProperties)
+| extend _appName = tostring(TargetResources.modifiedProperties.[6].newValue)
+| extend _appPermission = tostring(TargetResources.modifiedProperties.[1].newValue)
+| extend _consentedBy = tostring(InitiatedBy.user.userPrincipalName)
+| summarize arg_max(TimeGenerated, *) by _appPermission //deduplicate records
+QUERY
+
+  enabled             = true
+  suppression_enabled = false
+  tactics             = ["Collection", "Persistence"]
+  techniques          = ["T1119", "T1098"]
+
+  /*
+need to flush out entity mapping
+   entity_mapping {
+     entity_type = "Account"
+     field_mapping {
+       identifier  = "Name"
+       column_name = "InitiatingProcessAccountSid"
+     }
+   }
+*/
+
+  event_grouping {
+    aggregation_method = "SingleAlert"
+  }
+
+  incident {
+    create_incident_enabled = true
+
+    grouping {
+      by_alert_details        = []
+      by_custom_details       = []
+      by_entities             = []
+      enabled                 = true
+      entity_matching_method  = "AllEntities"
+      lookback_duration       = "PT5M"
+      reopen_closed_incidents = false
+    }
+  }
+}
+
 ###
 #Device Related Rules
 
