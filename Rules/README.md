@@ -11,6 +11,7 @@ User post compromise detections:
 Application/Service Principal related detections:
 - Application__Registered_RedirectUri_LocalHost_Authentication_v01 -- Rule to detect when an application is registered with a RedirectUri set to localhost or loopback address.
 - Application_RedirectUri_LocalHost_Authentication_Added_v01 -- Rule to detect when a registered application is given a Redirect Url for localhost or loopback address.
+- Mail_Api_Permissions_Grant -- Rule to detect when constent is given to API permissions related to retrieving and sending emails. Masquarading or malicious apps can use these api permissions for nefarious purposes. See threat intel https://security.microsoft.com/threatanalytics3/ba008625-320a-4c71-b996-977049575144/analystreport.
 
 Device related detections:
 - Unapproved_RMM_Tools_v01 -- Rule is intended to trigger off the detection of unapproved RMM tools via a url connection.
