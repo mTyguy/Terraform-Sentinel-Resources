@@ -381,7 +381,7 @@ QUERY
 
 resource "azurerm_sentinel_alert_rule_nrt" "NRT_Mail_Api_Permissions_Grant" {
   name                       = "NRT_Mail_Api_Permissions_Grant"
-  description                = "Rule to detect when an constent is given to API permissions related to retrieving and sending emails. Masquarading or malicious apps can use these api permissions for nefarious purposes. See threat intel https://security.microsoft.com/threatanalytics3/ba008625-320a-4c71-b996-977049575144/analystreport"
+  description                = "Rule to detect when constent is given to API permissions related to retrieving and sending emails. Masquarading or malicious apps can use these api permissions for nefarious purposes. See threat intel https://security.microsoft.com/threatanalytics3/ba008625-320a-4c71-b996-977049575144/analystreport"
   log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
   display_name               = "Mail_Api_Permissions_Grant"
   severity                   = "High"
