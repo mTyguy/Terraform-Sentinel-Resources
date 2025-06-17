@@ -2,7 +2,7 @@ Current Rules:
 
 User login related detections:
 - NonUS_Logins_Watchlist_v02 -- Rule is intended to trigger off successful NonUS logins, disabled, utilize NonUS_Logins_Watchlist_with_Whitelisting_v02 for it's whitelisting capabilities, or run this detection in parallel.
-- NonUS_Logins_Watchlist_with_Whitelisting_v02 -- Rule is intended to trigger off successful NonUS logins. Includes a builtin whitelisting mechanism that checks a remote csv file for user travel destination countries and return dates. Intentionally excluding countries designated by US Federal Government as Foriengn Adversaries.
+- NonUS_Logins_Watchlist_with_Whitelisting_v02 -- Rule is intended to trigger off successful NonUS logins. Includes a builtin whitelisting mechanism that checks a remote csv file for users' regular locations -- see /scripts/get_user_properties_put_file_blob_storage.ps1. Intentionally excluding countries designated by US Federal Government as Foriengn Adversaries.
 - FA_Logins_Watchlist_v02 -- Rule is intended to trigger off successful logins from countries designated as Foriegn Adversaries by US Federal Government.
 
 User post compromise detections:
@@ -21,4 +21,6 @@ Device related detections:
  
 /externaldata holds external data to be used in KQL queries
 
-/scripts holds helper scripts to retrieve externaldata
+/scripts holds helper scripts to retrieve information to be used in KQL externaldata or auditing
+  - get_user_properties_put_file_blob_storage.ps1 -- pulls accountEnabled,displayName,userPrincipalName,id,country,usageLocation,userType from users' properties in Entra, exports to csv, and uploads to azure storage to be queried in KQL.
+  - privileged_apps.ps1 -- pulls all Service Principal Ids then gets all Application role assignments for the Service Principals and exports to csv. Allows for insight into all Application permission grants to service prinicpals in the tenant.
