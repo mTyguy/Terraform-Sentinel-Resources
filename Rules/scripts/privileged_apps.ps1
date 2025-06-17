@@ -1,4 +1,17 @@
 # version 0.1 #
+
+#Pulls all Service Principal Ids then gets all Application role assignments for the Service Principals and exports to csv.
+#Allows for insight into all Application permission grants to service prinicpals in the tenant.
+
+# Requirements #
+#AzPowerShell pwsh module
+#https://learn.microsoft.com/en-us/powershell/azure/?view=azps-14.0.0
+
+# Permissions #
+#Application.Read.All
+
+###
+
 # Define the Application (Client) ID and Secret
 $ApplicationClientId = 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'
 $ApplicationClientSecret = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
