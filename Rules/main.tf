@@ -589,3 +589,76 @@ QUERY
     }
   }
 }
+
+#
+
+resource "azurerm_sentinel_alert_rule_nrt" "NRT_FileFix_v01" {
+  name                       = "FileFix_v01"
+  description                = "Rule is intended to trigger off FileFix, a ClickFix alternative. See threat intel -- https://mrd0x.com/filefix-clickfix-alternative/"
+  log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
+  display_name               = "FileFix"
+  severity                   = "High"
+  query                      = <<QUERY
+let browsers = dynamic(["firefox","msedge","chrome"]);
+let suspiciousCmds = dynamic(["ping","whoami","cmd","powershell","pwsh"]);
+DeviceProcessEvents
+| where ProcessCommandLine has_any (suspiciousCmds)
+| where InitiatingProcessFileName has_any (browsers)
+QUERY
+  enabled                    = true
+  suppression_enabled        = false
+  tactics                    = ["Execution"]
+  techniques                 = ["T1204"]
+
+  entity_mapping {
+    entity_type = "Account"
+    field_mapping {
+      identifier  = "Name"
+      column_name = "InitiatingProcessAccountSid"
+    }
+  }
+
+  entity_mapping {
+    entity_type = "Host"
+    field_mapping {
+      identifier  = "HostName"
+      column_name = "DeviceName"
+    }
+  }
+/*
+  entity_mapping {
+    entity_type = "URL"
+    field_mapping {
+      identifier  = "Url"
+      column_name = "RemoteUrl"
+    }
+  }
+*/
+  entity_mapping {
+    entity_type = "File"
+    field_mapping {
+      identifier  = "Name"
+      column_name = "InitiatingProcessVersionInfoOriginalFileName"
+    }
+  }
+
+  event_grouping {
+    aggregation_method = "SingleAlert"
+  }
+
+  incident {
+    create_incident_enabled = true
+
+    grouping {
+      by_alert_details        = []
+      by_custom_details       = []
+      by_entities             = []
+      enabled                 = true
+      entity_matching_method  = "AllEntities"
+      lookback_duration       = "PT5M"
+      reopen_closed_incidents = false
+    }
+  }
+}
+
+###
