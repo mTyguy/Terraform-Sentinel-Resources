@@ -18,6 +18,7 @@ Application/Service Principal related detections:
 
 Device related detections:
 - Unapproved_RMM_Tools_v01 -- Rule is intended to trigger off the detection of unapproved RMM tools via a url connection.
+- FileFix_v01 -- Rule is intended to trigger off FileFix, a ClickFix alternative. See threat intel -- https://mrd0x.com/filefix-clickfix-alternative/
  
 /externaldata holds external data to be used in KQL queries
 
