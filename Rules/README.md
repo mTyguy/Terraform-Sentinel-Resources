@@ -14,7 +14,7 @@ Application/Service Principal related detections:
 
 - Mail_Api_Permissions_Grant_Application -- Rule to detect when constent is given to application type API permissions. Permissions are related to retrieving and sending emails. Masquarading, malicious, or unapproved apps can use these api permissions for nefarious purposes.
 - Mail_Api_Permissions_Grant_Delegated -- Rule to detect when constent is given to delegated type API permissions. Permissions are related to retrieving and sending emails. Masquarading, malicious, or unapproved apps can use these api permissions for nefarious purposes.
-  - For the two above, see threat intel https://security.microsoft.com/threatanalytics3/ba008625-320a-4c71-b996-977049575144/analystreport.
+  - For the two above, see threat intel regarding "Activity Profile: Suspicious OAuth applications used to retrieve and send emails" https://security.microsoft.com/threatanalytics3/ba008625-320a-4c71-b996-977049575144/analystreport.
 
 Device related detections:
 - Unapproved_RMM_Tools_v01 -- Rule is intended to trigger off the detection of unapproved RMM tools via a url connection.
