@@ -18,6 +18,7 @@ Application/Service Principal related detections:
 
 Device related detections:
 - Unapproved_RMM_Tools_v01 -- Rule is intended to trigger off the detection of unapproved RMM tools via a url connection.
+- Malicious_Browser_Extensions -- Rule is intended to trigger off the detection of malicicious browser extensions based on id string. Can create this as a custom rule in defender, then create an action that blocks and quarantines the file for automatic remediation or make a playbook in Sentinel. Threat Intel from https://arstechnica.com/security/2025/07/browser-extensions-turn-nearly-1-million-browsers-into-website-scraping-bots/
 - FileFix_v01 -- Rule is intended to trigger off FileFix, a ClickFix alternative. See threat intel -- https://mrd0x.com/filefix-clickfix-alternative/
  
 /externaldata holds external data to be used in KQL queries
