@@ -16,6 +16,9 @@ Application/Service Principal related detections:
 - Mail_Api_Permissions_Grant_Delegated -- Rule to detect when constent is given to delegated type API permissions. Permissions are related to retrieving and sending emails. Masquarading, malicious, or unapproved apps can use these api permissions for nefarious purposes.
   - For the two above, see threat intel regarding "Activity Profile: Suspicious OAuth applications used to retrieve and send emails" https://security.microsoft.com/threatanalytics3/ba008625-320a-4c71-b996-977049575144/analystreport.
 
+GraphAPI Rules:
+- Mailbox Stored Credentials Searching -- Rule is looking for GraphAPI calls that are searching for credentials stored in emails. Specifically, GET calls to /users/{id|userPrincipalName}/messages with ?$search= password, credentials, etc. Can add known good applications to the exclusion.
+
 Device related detections:
 - Unapproved_RMM_Tools_v01 -- Rule is intended to trigger off the detection of unapproved RMM tools via a url connection.
 - Malicious_Browser_Extensions -- Rule is intended to trigger off the detection of malicicious browser extensions based on id string. Can create this as a custom rule in defender, then create an action that blocks and quarantines the file for automatic remediation or make a playbook in Sentinel. Threat Intel from https://arstechnica.com/security/2025/07/browser-extensions-turn-nearly-1-million-browsers-into-website-scraping-bots/
