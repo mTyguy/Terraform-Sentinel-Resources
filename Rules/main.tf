@@ -507,6 +507,85 @@ need to flush out entity mapping
   }
 }
 
+/*
+###
+#GraphAPI Rules
+#GraphAPIAuditEvent table currently in preview
+
+resource "azurerm_sentinel_alert_rule_nrt" "NRT_Mailbox_Stored_Credentials_Seaching_v01" {
+  name                       = "Mailbox_Stored_Credentials_Searching_v01"
+  description                = "Rule is looking for GraphAPI calls that are searching for credentials stored in emails. Specifically, GET calls to /users/{id|userPrincipalName}/messages with ?$search= password, credentials, etc. Can add known good applications to the exclusion."
+  log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
+  display_name               = "Mailbox_Stored_Credentials_Searching"
+  severity                   = "High"
+  query                      = <<QUERY
+//let _ApprovedApps = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"; //exclusion mechanism can also exclude based off AccountObjectId
+GraphAPIAuditEvents
+| extend _trimmedRequestUri = trim_start(@"(https:\/\/graph.microsoft.com\/)",RequestUri)
+| where _trimmedRequestUri has_all ("messages","search")
+| where _trimmedRequestUri matches regex @"\W*(credential|credentials|password|passwd|passcode|secret)"
+//| join kind=inner AADServicePrincipalSignInLogs on $left.ApplicationId == $right.AppId //correlate to a ServicePrincipalName
+//| where not(ApplicationId has_any (_ApprovedApps)) //exclusion mechanism
+| project-reorder _trimmedRequestUri,RequestMethod,ResponseStatusCode
+| sort by TimeGenerated desc
+QUERY
+  enabled                    = true
+  suppression_enabled        = false
+  tactics                    = ["CredentialAccess"]
+  techniques                 = ["T1555"]
+
+  entity_mapping {
+    entity_type = "Account"
+    field_mapping {
+      identifier  = "Name"
+      column_name = "InitiatingProcessAccountSid"
+    }
+  }
+
+  entity_mapping {
+    entity_type = "Host"
+    field_mapping {
+      identifier  = "HostName"
+      column_name = "DeviceName"
+    }
+  }
+
+  entity_mapping {
+    entity_type = "URL"
+    field_mapping {
+      identifier  = "Url"
+      column_name = "RemoteUrl"
+    }
+  }
+
+  entity_mapping {
+    entity_type = "File"
+    field_mapping {
+      identifier  = "Name"
+      column_name = "InitiatingProcessVersionInfoOriginalFileName"
+    }
+  }
+
+  event_grouping {
+    aggregation_method = "SingleAlert"
+  }
+
+  incident {
+    create_incident_enabled = true
+
+    grouping {
+      by_alert_details        = []
+      by_custom_details       = []
+      by_entities             = []
+      enabled                 = true
+      entity_matching_method  = "AllEntities"
+      lookback_duration       = "PT5M"
+      reopen_closed_incidents = false
+    }
+  }
+}
+*/
+
 ###
 #Device Related Rules
 
