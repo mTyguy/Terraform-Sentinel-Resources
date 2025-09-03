@@ -278,6 +278,120 @@ need to flush out entity mapping
   }
 }
 
+#
+
+resource "azurerm_sentinel_alert_rule_nrt" "NRT_GA_Az_Escalation_Watchlist_v01" {
+  name                       = "GA_Az_Escalation_Watchlist_v01"
+  description                = "Rule intended to trigger off a Global Administrator escalating their privileges to Azure subscriptions. A-typical way to gain access to Azure subscriptions. Escalation technique used by Storm-0501 after compormising a Global Administrator account. See TI https://www.microsoft.com/en-us/security/blog/2025/08/27/storm-0501s-evolving-techniques-lead-to-cloud-based-ransomware/"
+  log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
+  display_name               = "GlobalAdmin_Escalated_Azure_Permissions_Detected"
+  severity                   = "High"
+  query                      = <<QUERY
+AuditLogs
+| where OperationName contains "User has elevated their access to User Access Administrator for their Azure Resources"
+QUERY
+  enabled                    = true
+  suppression_enabled        = false
+  tactics                    = ["PrivilegeEscalation"]
+  techniques                 = ["T1078"]
+
+  entity_mapping {
+    entity_type = "Account"
+    field_mapping {
+      identifier  = "Name"
+      column_name = "Identity"
+    }
+  }
+  /*  
+  entity_mapping {
+    entity_type = "IP"
+    field_mapping {
+      identifier  = "Address"
+      column_name = "IPAddress"
+    }
+  }
+
+  custom_details = {
+    Location         = "Location"
+    RiskDuringSignIn = "RiskLevelDuringSignIn"
+  }
+*/
+  event_grouping {
+    aggregation_method = "SingleAlert"
+  }
+
+  incident {
+    create_incident_enabled = true
+
+    grouping {
+      by_alert_details        = []
+      by_custom_details       = []
+      by_entities             = []
+      enabled                 = true
+      entity_matching_method  = "AllEntities"
+      lookback_duration       = "PT5M"
+      reopen_closed_incidents = false
+    }
+  }
+}
+
+#
+
+resource "azurerm_sentinel_alert_rule_nrt" "NRT_Federation_Modification_Watchlist_v01" {
+  name                       = "Federation_Modification_Watchlist_v01"
+  description                = "Rule intended to trigger off a change being made to domain authentication or federation settings. Storm-0501 was recently seen using this technique to effectively create a backdoor for authentication puposes to the victim tenant, allowing the TA to craft their own SAML tokens. See TI https://www.microsoft.com/en-us/security/blog/2025/08/27/storm-0501s-evolving-techniques-lead-to-cloud-based-ransomware/"
+  log_analytics_workspace_id = data.terraform_remote_state.terraform_output.outputs.sentinel_onboarding_workspace_id
+  display_name               = "Federation_Modification_Detected"
+  severity                   = "High"
+  query                      = <<QUERY
+AuditLogs
+| where OperationName has_any("Set federation settings on domain","Set domain authentication")
+QUERY
+  enabled                    = true
+  suppression_enabled        = false
+  tactics                    = ["PrivilegeEscalation"]
+  techniques                 = ["T1078"]
+
+  entity_mapping {
+    entity_type = "Account"
+    field_mapping {
+      identifier  = "Name"
+      column_name = "Identity"
+    }
+  }
+  /*  
+  entity_mapping {
+    entity_type = "IP"
+    field_mapping {
+      identifier  = "Address"
+      column_name = "IPAddress"
+    }
+  }
+
+  custom_details = {
+    Location         = "Location"
+    RiskDuringSignIn = "RiskLevelDuringSignIn"
+  }
+*/
+  event_grouping {
+    aggregation_method = "SingleAlert"
+  }
+
+  incident {
+    create_incident_enabled = true
+
+    grouping {
+      by_alert_details        = []
+      by_custom_details       = []
+      by_entities             = []
+      enabled                 = true
+      entity_matching_method  = "AllEntities"
+      lookback_duration       = "PT5M"
+      reopen_closed_incidents = false
+    }
+  }
+}
+
 ###
 #Application/Service Principal Related rules
 
