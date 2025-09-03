@@ -8,6 +8,9 @@ User login related detections:
 User post compromise detections:
 - Risky_User_Registers_New_MFA_v01 -- Rule to detect when a user with an active risk state registers a new MFA method.
 
+- GlobalAdmin_Escalated_Azure_Permissions_Detected -- Rule intended to trigger off a Global Administrator escalating their privileges to Azure subscriptions. A-typical way to gain access to Azure subscriptions. Escalation technique used by Storm-0501 after compormising a Global Administrator account. See TI https://www.microsoft.com/en-us/security/blog/2025/08/27/storm-0501s-evolving-techniques-lead-to-cloud-based-ransomware/
+- Federation_Modification_Detected -- Rule intended to trigger off a change being made to domain authentication or federation settings. Storm-0501 was recently seen using this technique to effectively create a backdoor for authentication puposes to the victim tenant, allowing the TA to craft their own SAML tokens. See TI https://www.microsoft.com/en-us/security/blog/2025/08/27/storm-0501s-evolving-techniques-lead-to-cloud-based-ransomware/
+
 Application/Service Principal related detections:
 - Application__Registered_RedirectUri_LocalHost_Authentication_v01 -- Rule to detect when an application is registered with a RedirectUri set to localhost or loopback address.
 - Application_RedirectUri_LocalHost_Authentication_Added_v01 -- Rule to detect when a registered application is given a Redirect Url for localhost or loopback address.
